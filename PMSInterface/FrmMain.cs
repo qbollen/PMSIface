@@ -964,11 +964,7 @@ namespace PMSInterface
                     break;
             }
         }      
-        /// <summary>
-        /// test
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+
         private void timerConnectClient_Tick(object sender, EventArgs e)
         {
             ConnectTuClient();
