@@ -969,7 +969,11 @@ namespace PMSInterface
         {
             ConnectTuClient();
         }
-   
+   /// <summary>
+   /// connect
+   /// </summary>
+   /// <param name="sender"></param>
+   /// <param name="e"></param>
         private void btnConnToPMS_Click(object sender, EventArgs e)
         {
             string operate = this.btnConnToPMS.Text;
