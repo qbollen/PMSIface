@@ -64,6 +64,7 @@ namespace Utils
         NULL,
         IF, /*info*/
         KR, /*Key request*/
+        KG, /*Key Get*/
         KD, /*Key delete*/
         KA, /*Key Answer*/
         RQ  /*request*/

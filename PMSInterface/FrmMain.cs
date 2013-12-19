@@ -563,13 +563,21 @@ namespace PMSInterface
         private bool VerifyInstruct(Dictionary<string, string> newInstruct, out string kc,
             out Command command, out string err)
         {
+            bool chkKR = false, chkKD = false;
+
             if (newInstruct["KR"] == "True")
             {
                 command = Command.KR;
+                chkKR = true;
+            }
+            else if (newInstruct["KG"] == "True")
+            {
+                command = Command.KG;
             }
             else if (newInstruct["KD"] == "True")
             {
                 command = Command.KD;
+                chkKD = true;
             }
             else
             {
@@ -589,38 +597,47 @@ namespace PMSInterface
 
             kc = keycoder;
 
-            string roomNumber = newInstruct["RN"];
-            if (roomNumber == string.Empty)
+            if (chkKR == true || chkKD == true)
             {
-                err = "Room number cannot be empty";
-                return false;
+                string roomNumber = newInstruct["RN"];
+                if (roomNumber == string.Empty)
+                {
+                    err = "Room number cannot be empty";
+                    return false;
+                }
+                else
+                {
+                    string sql = "select room_name from room where val(room_name)="
+                        + Convert.ToInt32(roomNumber).ToString();
+                    sqlHelper.CurrConn = Utils.DbType.Remote;
+                    if (sqlHelper.ExecuteScalar(sql, null) == null)
+                    {
+                        err = "Room number is not found";
+                        return false;
+                    }
+                }
             }
 
-            string sql = "select room_name from room where val(room_name)=" 
-                + Convert.ToInt32(roomNumber).ToString();
-            sqlHelper.CurrConn = Utils.DbType.Remote;
-            if (sqlHelper.ExecuteScalar(sql, null) == null)
+            if (chkKR == true)
             {
-                err = "Room number is not found";
-                return false;
-            }
 
-            if (newInstruct["AD"] == string.Empty)
-            {
-                err = "Arrival date cannot be empty";
-                return false;
-            }
+                if (newInstruct["AD"] == string.Empty)
+                {
+                    err = "Arrival date cannot be empty";
+                    return false;
+                }
 
-            if (newInstruct["DD"] == string.Empty)
-            {
-                err = "Departure date cannot be empty";
-                return false;
-            }
+                if (newInstruct["DD"] == string.Empty)
+                {
+                    err = "Departure date cannot be empty";
+                    return false;
+                }
 
-            if (CheckOutType == "interface" && newInstruct["CT"] == string.Empty)
-            {
-                err = "You choose check-out type is interface,so check-out time cannot be empty";
-                return false;
+                if (CheckOutType == "interface" && newInstruct["CT"] == string.Empty)
+                {
+                    err = "You choose check-out type is interface,so check-out time cannot be empty";
+                    return false;
+                }
             }
 
             err = "";
