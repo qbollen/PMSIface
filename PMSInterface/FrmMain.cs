@@ -483,10 +483,13 @@ namespace PMSInterface
 
                         switch (cmd)
                         {
-                            case Command.KR:
+                            case Command.KR: //issue card
                                 PackageInstruct(newInstruct);
                                 break;
-                            case Command.KD:
+                            case Command.KD: //delete card
+                                InitData();
+                                break;
+                            case Command.KG: //read card
                                 InitData();
                                 break;
                             default:
