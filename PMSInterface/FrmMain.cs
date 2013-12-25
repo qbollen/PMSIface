@@ -19,7 +19,7 @@ namespace PMSInterface
     {
         Thread serverThread;
         //TcpClient clientTcp;
-        private string[] Data = new string[50];
+        private string[] Data = new string[8];
         SqlHelper sqlHelper = new SqlHelper();
         public static ConnSta CurrConnSta = ConnSta.NULL;
         private static ConnSta CurrInterfaceConnSta = ConnSta.NULL;
@@ -438,19 +438,9 @@ namespace PMSInterface
                         string rec = Encoding.UTF8.GetString(buffer, 0, size);
                         this.CommLog(rec + "  <- From Pms");
 
-                        //string orgrec = rec.Substring(1, rec.Length - 2);
                         //去掉消息前，后缀
                         rec = rec.Replace(InstructMap["PR"],"");
                         rec = rec.Replace(InstructMap["SU"],"");
-
-                        /*string[] InsRec =
-               rec.Split(new char[] { InstructMap["Separator"][0] }, StringSplitOptions.RemoveEmptyEntries);
-
-                        if (InsRec[0] == "LS")
-                        {
-                            Fidelio_Key_Send(InterfaceClient.NetStream);
-                            continue;
-                        }*/
 
                         Dictionary<string, string> newInstruct = InstructTransform(rec);
                         if (newInstruct == null)
@@ -481,21 +471,23 @@ namespace PMSInterface
                             continue;
                         }
 
+                        NetworkStream stream = host.GetStream();
+
                         switch (cmd)
                         {
                             case Command.KR: //issue card
                                 PackageInstruct(newInstruct);
+                                BollenSocket.Send(stream, new SocketEntity(cmd, Data, "", ""));
                                 break;
                             case Command.KD: //delete card
-                                InitData();
+                                BollenSocket.Send(stream, new SocketEntity(cmd, new string[] { }, "", ""));
                                 break;
                             case Command.KG: //read card
-                                InitData();
+                                BollenSocket.Send(stream, new SocketEntity(cmd, new string[] { Auth_Code }, "", ""));
                                 break;
                             default:
                                 break;
-                        }
-                        BollenSocket.Send(host.GetStream(), new SocketEntity(cmd, Data, "", ""));
+                        }                       
                     }
                 }
             }
@@ -649,96 +641,63 @@ namespace PMSInterface
 
         private void InitData()
         {
-            //Data[0-47] 发卡数据 Data[48]是发卡次数
-            for (int i = 0; i < 44; i++)
-                Data[i] = "00";
+            Data[0] = Guid.NewGuid().ToString();
+            Data[1] = "1";
+            Data[2] = Auth_Code;
+            Data[3] = "00";
+            Data[4] = "0000";
+            Data[5] = "0";
+            Data[6] = "yyyy-MM-dd hh:mm:ss";
+            Data[7] = "yyyy-MM-dd hh:mm:ss";
 
-            Data[44] = "01";
-            Data[45] = "01";
-            Data[46] = "02";
-            Data[47] = "05";
-
-            Data[48] = "1";
-            Data[49] = "";
         }
 
         private void PackageInstruct(Dictionary<string, string> newInstruct)
         {
+            /* Data Struct
+             * data[0] Guid
+             * data[1] key count
+             * data[2] auth
+             * data[3] building
+             * data[4] room
+             * data[5] commdoors
+             * data[6] arrival
+             * data[7] departure
+             */
+
             InitData();
+
             //发卡次数
             string keycount = newInstruct["KT"];
             if (keycount != string.Empty)
             {
-                Data[48] = keycount;
+                Data[1] = keycount;
             }
-
-            Data[49] = Guid.NewGuid().ToString();
 
             //------初始化发卡数据-----
-            //Data[0:2] 授权密码
-            Data[0] = Auth_Code.Substring(0,2);
-            Data[1] = Auth_Code.Substring(2, 2);
-            Data[2] = Auth_Code.Substring(4, 2);
 
-            //Data[3] = "0D" 卡类型
-            Data[3] = "0D";
+            //楼号
+            Data[3] = Building_Addr;
 
-            //Data[4] 挂失标志； 0：不处理被挂失卡，1：挂失卡写入黑名单  2：取消被挂失卡黑名单；
-            Data[4] = "00";
+            //房号
+            string room = newInstruct["RN"];
+            Data[4] = room;
 
-            //Data[5] 楼号
-            Data[5] = TypeConvert.ToHex(Building_Addr);
+            //VIP功能；
+            Data[5] = newInstruct["CD"];
 
-            //Data[6] 楼层
-            string roomNumber = newInstruct["RN"];
-            string floor,room;
-            if (roomNumber.Length == 4)
-            {
-                floor = roomNumber.Substring(0,2);
-                room = roomNumber.Substring(2,2);
-            }
-            else
-            {
-                floor = roomNumber.Substring(0,1);
-                room = roomNumber.Substring(1,2);
-            }          
-            Data[6] = TypeConvert.ToHex(floor);
-            //Data[7] 房号 (不用了)
-
-            //Data[8] 套房房间号；总共可表示8个房间；bit[0],表示大门；
-
-            //Data[9:11] 卡号
-            string[] cardNumber = GenerateCardNumber();
-            Data[9] = cardNumber[0] + cardNumber[1];
-            Data[10] = cardNumber[2] + cardNumber[3];
-            Data[11] = cardNumber[4] + cardNumber[5];
-
-            //Data[12:14]挂失卡编号；
-
-            //Data[15]     VIP功能；
-            //1、  bit[0]    会议室；
-            //2、  bit[1]    桑拿室；
-            //3、  bit[2]    K歌房；
-            //4、  bit[3]    餐厅；
-            //5、  bit[4]    高尔夫球场； 
-
-            
+            //卡开始时间
             string dateFormat = InstructMap["Date"];
             string timeFormat = InstructMap["Time"];
             string sDateTime = newInstruct["AD"] + "000000";
             string format = dateFormat + "HHmmss";
-            //Data[16:21] 卡开始时间            
+                        
             DateTime dateTimeA = DateTime.ParseExact(sDateTime, format, 
-                        System.Globalization.CultureInfo.InvariantCulture);                                       
-            dateTimeA = dateTimeA.AddDays(-100);
-            Data[16] = string.Format("{0:ss}", dateTimeA);      //秒
-            Data[17] = string.Format("{0:mm}", dateTimeA);      //分
-            Data[18] = string.Format("{0:HH}", dateTimeA);      //时
-            Data[19] = string.Format("{0:dd}", dateTimeA);      //日
-            Data[20] = string.Format("{0:MM}", dateTimeA);      //月
-            Data[21] = string.Format("{0:yy}", dateTimeA);      //年
+                        System.Globalization.CultureInfo.InvariantCulture);
 
-            //Data[22:27]卡结束时间
+            Data[6] = string.Format("{0:yyyy-MM-dd hh:mm:ss}", dateTimeA);
+
+            //卡结束时间
             string outTime;
             switch (CheckOutType)
             {                    
@@ -758,38 +717,20 @@ namespace PMSInterface
             sDateTime = newInstruct["DD"] + outTime;
             DateTime dateTimeB = DateTime.ParseExact(sDateTime, dateFormat + timeFormat,
                 System.Globalization.CultureInfo.InvariantCulture);
-            Data[22] = string.Format("{0:ss}", dateTimeB);     //秒
-            Data[23] = string.Format("{0:mm}", dateTimeB);     //分
-            Data[24] = string.Format("{0:HH}", dateTimeB);     //时
-            Data[25] = string.Format("{0:dd}", dateTimeB);     //日
-            Data[26] = string.Format("{0:MM}", dateTimeB);     //月
-            Data[27] = string.Format("{0:yy}", dateTimeB);     //年
 
-            //Data[28:31] 不用
-
-            //Data[32:39] [0:7]8个房间号； Data[32] 房间号写在此
-            Data[32] = TypeConvert.ToHex(room);
-
-            /*MessageBox.Show(Data[32]);
-
-            string ww = string.Empty;
-            foreach (string k in Data)
-            {
-                ww = ww + k;
-            }
-            MessageBox.Show(ww);*/
+            Data[7] = string.Format("{0:yyyy-MM-dd hh:mm:ss}", dateTimeB);
 
             IssueRecEntity entity = new IssueRecEntity();
-            entity.RoomNumber = roomNumber;
-            entity.KeyCount = Data[48];
+            entity.RoomNumber = room;
+            entity.KeyCount = Data[1];
             entity.KeyType = "New Key";
             entity.OperateTime = "";
             entity.Workstation = "";
             entity.KeyCoder = newInstruct["KC"];
             entity.GuestName = newInstruct["GN"];
-            entity.ArrivalDate = string.Format("{0:yyyy-MM-dd HH:mm:ss}",dateTimeA.AddDays(100));
-            entity.DepartureDate = string.Format("{0:yyyy-MM-dd HH:mm:ss}", dateTimeB);
-            Manage.InsertRecEntity(Data[49], entity);
+            entity.ArrivalDate = Data[6];
+            entity.DepartureDate = Data[7];
+            Manage.InsertRecEntity(Data[0], entity);
         }
 
         private string[] GenerateCardNumber()

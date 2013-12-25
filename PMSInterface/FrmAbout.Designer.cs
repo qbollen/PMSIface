@@ -78,7 +78,7 @@
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(45, 15);
             this.label4.TabIndex = 4;
-            this.label4.Text = "Ver 1.0";
+            this.label4.Text = "Ver 1.1";
             // 
             // linkLabel1
             // 

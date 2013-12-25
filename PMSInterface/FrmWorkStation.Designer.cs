@@ -34,8 +34,8 @@
             this.Status = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.KeyCoder = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.Workstation = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.Time = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.SuspendLayout();
             // 
             // listViewWorkstation
@@ -48,7 +48,7 @@
             this.listViewWorkstation.Dock = System.Windows.Forms.DockStyle.Fill;
             this.listViewWorkstation.Location = new System.Drawing.Point(0, 0);
             this.listViewWorkstation.Name = "listViewWorkstation";
-            this.listViewWorkstation.Size = new System.Drawing.Size(770, 508);
+            this.listViewWorkstation.Size = new System.Drawing.Size(770, 428);
             this.listViewWorkstation.SmallImageList = this.imageList1;
             this.listViewWorkstation.TabIndex = 0;
             this.listViewWorkstation.UseCompatibleStateImageBehavior = false;
@@ -69,22 +69,22 @@
             this.Workstation.Text = "Workstation";
             this.Workstation.Width = 300;
             // 
+            // Time
+            // 
+            this.Time.Text = "Time";
+            this.Time.Width = 200;
+            // 
             // imageList1
             // 
             this.imageList1.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imageList1.ImageStream")));
             this.imageList1.TransparentColor = System.Drawing.Color.Transparent;
             this.imageList1.Images.SetKeyName(0, "Go.png");
             // 
-            // Time
-            // 
-            this.Time.Text = "Time";
-            this.Time.Width = 200;
-            // 
             // FrmWorkStation
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(770, 508);
+            this.ClientSize = new System.Drawing.Size(770, 428);
             this.Controls.Add(this.listViewWorkstation);
             this.Name = "FrmWorkStation";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
